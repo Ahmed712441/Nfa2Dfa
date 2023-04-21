@@ -113,7 +113,8 @@ class DrawingCanvas(Frame):
                     line = node.connect_to_itself()
                     line.bind_event(self.line_clicked)
                     self.objects[str(line.get_id())] =  line
-                except Exception as e:         
+                except Exception as e:
+                    print(e)        
                     messagebox.showerror(title=e.title,message=e)
             else:
                 try:

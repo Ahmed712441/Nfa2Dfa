@@ -1,4 +1,5 @@
 from pathlib import Path
+import math
 
 BASE_DIR = Path(__file__).resolve().parent.parent.__str__()
 
@@ -28,3 +29,7 @@ VALUE_COLOR = 'red'
 SLEEP_AMOUNT = 1
 ROUNDED_RADUIS = 30 
 EPSILON = '\u03B5'
+HORIZONTAL_DISTANCE = 120
+DRAWING_SHIFT = 300
+DRAWING_ANGLE_TAN = (2*RADUIS+15) / HORIZONTAL_DISTANCE
+ALPHA = 0.4
