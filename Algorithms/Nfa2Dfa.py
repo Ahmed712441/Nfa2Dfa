@@ -9,58 +9,126 @@ def keyExists(dictt:dict,key:str):
     except:
         return False
 
+
 class Drawer:
 
     def __init__(self,canvas,graph,alphabet) -> None:
         self.__canvas = canvas
-        # self.__graph = graph
-        self.__graph = [i for i in range(3)]
-        self.__alphabet = alphabet
-        self.__level1 = DRAWING_SHIFT
+        self.__graph = graph
+        self.__alphabets = alphabet
+        self.check_error_state()
+        self.reformat_transition_table()
+        self.create_graph_table()
+        self.__level1 =  self.calculate_level1_shift() # DRAWING_SHIFT
         self.calculate_vertical_distance()
         self.draw()
 
-    def calculate_vertical_distance(self):
+    def check_error_state(self):
+
+        # check for error state and add it if need for any node
+        has_error_state = False
+        for key in self.__graph.keys():
+            adj = self.__graph[key] # new dict with all reached node from this node and alpahbets need for transition
+            for alphabet in self.__alphabets:
+                if not keyExists(adj,alphabet):
+                    has_error_state = True
+                    self.__graph[key][alphabet] = ['err_state']
+
+        if has_error_state:
+            self.create_error_state()
+
+    def create_error_state(self):
+        
+        err_state = dict()
+        for alphabet in self.__alphabets:
+            err_state[alphabet] = ['err_state']
+        self.__graph['err_state'] = err_state
+
+    def reformat_transition_table(self):
+
+        '''
+        reformat the structure of self.__graph (transition table) from maping to list of Node to map to string with node name
+        '''
+        for key in self.__graph.keys():
+            adj = self.__graph[key]
+            for alphabet in adj.keys():
+                propagation_nodes = self.__graph[key][alphabet]
+                propagation_nodes.sort()
+                if len(propagation_nodes) == 1:
+                    self.__graph[key][alphabet] = ''.join(propagation_nodes[0].__str__()) 
+                else:
+                    self.__graph[key][alphabet] = '{'+','.join([n.__str__() for n in propagation_nodes])+'}'
+    
+
+    def create_graph_table(self):
+        '''
+        similar to transition table but instead of maping each alphabet to each node map nodes to alphabets reached by
+        '''
+        self.__graph_map = dict()
+        nodes = list(self.__graph.keys())
+        
+        # intialize with empty list
+        for n in nodes:
+            self.__graph_map[n] = dict()
+            for recursive_node in nodes:
+                self.__graph_map[n][recursive_node] = []
+
+        # reformat        
+        for n in nodes:
+            adj = self.__graph[n]
+            for alphabet in adj.keys():
+                self.__graph_map[n][adj[alphabet]].append(alphabet)
+
+        #clean non reachable nodes
+        for ni in nodes:
+            for nj in nodes:
+                alphabets = self.__graph_map[ni][nj]
+                alphabets.sort()
+                if len(alphabets) == 0:
+                    del self.__graph_map[ni][nj]
+                else:
+                    self.__graph_map[ni][nj] = ','.join(alphabets)
+        
+    def calculate_level1_shift(self):
         self.__num_of_nodes = len(self.__graph) + 1
         self.__nodes_in_line = math.ceil(self.__num_of_nodes/2)
-        x1 = DRAWING_SHIFT
-        x2 = DRAWING_SHIFT+(self.__nodes_in_line-1)*HORIZONTAL_DISTANCE
-        y2 = DRAWING_SHIFT+RADUIS
+        dx = (self.__nodes_in_line)*HORIZONTAL_DISTANCE
+        shift = (BETA-BETA_LABEL) * dx
+        return shift
+
+    def calculate_vertical_distance(self):
+
+        x1 = self.__level1
+        x2 = self.__level1+(self.__nodes_in_line-1)*HORIZONTAL_DISTANCE
+        y2 = self.__level1+RADUIS
         self.__level2 = y2 + (x2-x1)*DRAWING_ANGLE_TAN - RADUIS # y1 = 60+x+RADUIS 
 
 
     def draw(self):
         
-        nodes = []
-        for i in range(self.__num_of_nodes):
+        print(self.__graph)
+        print(self.__graph_map)
+        # for node in self.__graph_map:
+            
+        nodes_labels = list(self.__graph_map.keys())
+        nodes = {node:"" for node in nodes_labels}
+        for i in range(len(nodes_labels)):
+            curr_level = 1 if i % 2 == 0 else 2
             level = self.__level1 if i % 2 == 0 else self.__level2
             hor_shift = math.floor(i/2)*HORIZONTAL_DISTANCE
-            n = DFANode(self.__canvas,60+hor_shift,level,f'node{i}')
-            # n2 = Node(self.__canvas,60+HORIZONTAL_DISTANCE,60,'node2')
+            n = DFANode(self.__canvas,60+hor_shift,level,f'{nodes_labels[i]}',level=curr_level)
             n.create()
-            nodes.append(n)
-            # n2.create()
-        # self.connect_all_levels(nodes)
-        self.connect_all_in_same_level(nodes)
-
-    def connect_all_levels(self,nodes):
-        '''
-        testing function connect all nodes in upper level with nodes in lower level and vice versa
-        '''
-        for i in range(0,self.__num_of_nodes,2):
-            for j in range(1,self.__num_of_nodes,2):
-                nodes[i].connect_node(nodes[j],'a')
-                nodes[j].connect_node(nodes[i],'a')
-            
-    def connect_all_in_same_level(self,nodes):
-        '''
-        testing function connect all nodes in in lower level with each other
-        '''
-        for i in range(0,self.__num_of_nodes,2):
-            for j in range(0,self.__num_of_nodes,2):
-                if i == j:
-                    continue
-                nodes[i].connect_node(nodes[j],'a')
+            nodes[nodes_labels[i]] = n
+        
+        # connecting nodes
+        for out_node in nodes_labels:
+            next_nodes = self.__graph_map[out_node]
+            for in_node in next_nodes:
+                label = self.__graph_map[out_node][in_node]
+                # if out_node == in_node:
+                # else:
+                nodes[out_node].connect_node(nodes[in_node],label)
+                
                 
 class NFA2DFA:
 
@@ -96,17 +164,15 @@ class NFA2DFA:
         new_label = NFA2DFA.update_label(currNodeLabel,epsilon_nodes)
         currNodes += epsilon_nodes
         self.__fringe[0] = [new_label,currNodes]
-        # print(self.__fringe[0])
-        # print(epsilon_node)
-        # return currLines
+        
 
     def propagate(self):
-        # print(self.__initialNode.lines_out,self.__fringe)
+        
         self.setup_node()
         currNodeLabel , currNodes = self.__fringe.pop(0)
         self.__visited.add(currNodeLabel)
         currLines = [line for node in currNodes for line in node.lines_out ]
-        # epsilon_connected = []
+        
         self.__graph[currNodeLabel] = self.propagate_lines(currLines)
         self.updateFringe(self.__graph[currNodeLabel])
         # print(currLines,self.__graph[currNodeLabel] )
@@ -130,7 +196,8 @@ class NFA2DFA:
                     continue
                 self.__alphabets.add(alphabet)
                 if keyExists(out,alphabet):
-                    out[alphabet].append(line.Node_in)
+                    if not line.Node_in in out[alphabet]:
+                        out[alphabet].append(line.Node_in)
                 else:
                     out[alphabet] = [line.Node_in]
 
@@ -143,9 +210,7 @@ class NFA2DFA:
             labels = set([node.get_label() for node in nodes])
             labels = [label for label in labels]
             labels.sort()
-            # print("labels:" ,labels)
             label = '{' + ','.join(labels) + '}'
-            # print(""label)
             label = label if len(label) > 3 else label[1]
             if not label in self.__visited :
                 self.__fringe.append([label,nodes])

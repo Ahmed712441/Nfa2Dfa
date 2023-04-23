@@ -45,6 +45,7 @@ class Line(Element):
             self.__has_epsilon = EPSILON in self.__weight
             print(self.__has_epsilon)
 
+
     def add_label(self):
 
         x1,y1,x2,y2 = self.__canvas.coords(self.__id)
@@ -189,6 +190,9 @@ class Node(Element,InteractionInterface):
     def get_heurastic(self):
         return self.__heurastic
 
+    def get_label_id(self):
+        return self.__label_id
+
     def get_label(self):
         return self.__label
 
@@ -317,9 +321,12 @@ class Node(Element,InteractionInterface):
         self.__canvas.tag_bind(self.__id, binded_event, lambda event, arg=self.__id: callback(event, arg))
         self.__canvas.tag_bind(self.__label_id, binded_event, lambda event, arg=self.__id: callback(event, arg))
 
-    def __str__(self):
+    # def __str__(self):
     
-        return "Node("+ str(self.__label)+")"
+        # return "Node("+ str(self.__label)+")"
+    
+    def __str__(self):
+        return  str(self.__label)
 
     def mark_visited(self):
         super().mark_visited()
@@ -420,6 +427,11 @@ class DFACurvedLine(Line):
         label_id = self.get_label_id()
         line_id = self.get_line_id()
         canvas = self.get_canvas()
+        
+        canvas.lift(line_id)
+        canvas.lift(label_id)
+        # canvas.lift(self.Node_out.get_id())
+        self.Node_out.lift()
 
         canvas.itemconfig(label_id, font=('Arial', 20),fill=LINE_COLOR_NORMAL)
         canvas.itemconfig(line_id, width=5 , fill=LINE_COLOR_SELECTED)
@@ -457,9 +469,8 @@ class DFACurvedLine(Line):
         dy = y1-y2
         dx = x1-x2
         angle= math.atan2(dy,dx)
-        x = x1 - 55*math.cos(angle)
-        y = y1 - 55*math.sin(angle)
-        # print(x,y,x1,y1)
+        x = x1 - LABEL_DIST*math.cos(angle)
+        y = y1 - LABEL_DIST*math.sin(angle)
         self.__label_id_ = canvas.create_text((x, y), text=weight)
 
     
@@ -470,7 +481,13 @@ class DFANode(Node):
         super().__init__(canvas, x, y, label, heurastic, goal, initial, expanded_level)
         self.__level = level 
 
-    
+    def lift(self):
+        id = super().get_id()
+        label_id = super().get_label_id()
+        canvas = super().get_canvas()
+
+        canvas.lift(id)
+        canvas.lift(label_id)
 
     def connect_node(self,node,weight=1):
         x1 , y1 = node.get_coor()
@@ -479,6 +496,9 @@ class DFANode(Node):
         if node in self.adj :
             raise DuplicateConnectionException()
         
+        if node == self:
+            return self.connect_to_itself(weight)
+
         sign = 1 if self.__level == 1 else -1 # used for drawing downward or upward
 
         l =  None

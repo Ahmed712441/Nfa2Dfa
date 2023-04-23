@@ -36,3 +36,4 @@ ALPHA = 0.15 # used for smooth curve on same horizontal level in x calculation (
 BETA = 0.9 # used for smooth curve on same horizontal level in y calculation (DFA drawing)
 ALPHA_LABEL = 0.22 # used for smooth curve on same horizontal level in x calculation (DFA drawing)
 BETA_LABEL = 0.35 # used for smooth curve on same horizontal level in y calculation (DFA drawing)
+LABEL_DIST = 55

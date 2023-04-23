@@ -15,19 +15,24 @@ class Drawer:
 
     def __init__(self,canvas,graph,alphabet) -> None:
         self.__canvas = canvas
-        # self.__graph = graph
-        self.__graph = [i for i in range(6)]
+        self.__graph = [i for i in range(10)]
         self.__alphabet = alphabet
-        self.__level1 = DRAWING_SHIFT
+        self.__level1 =  self.calculate_level1_shift() # DRAWING_SHIFT
         self.calculate_vertical_distance()
         self.draw()
 
-    def calculate_vertical_distance(self):
+    def calculate_level1_shift(self):
         self.__num_of_nodes = len(self.__graph) + 1
         self.__nodes_in_line = math.ceil(self.__num_of_nodes/2)
-        x1 = DRAWING_SHIFT
-        x2 = DRAWING_SHIFT+(self.__nodes_in_line-1)*HORIZONTAL_DISTANCE
-        y2 = DRAWING_SHIFT+RADUIS
+        dx = (self.__nodes_in_line)*HORIZONTAL_DISTANCE
+        shift = (BETA-BETA_LABEL) * dx
+        return shift
+
+    def calculate_vertical_distance(self):
+
+        x1 = self.__level1
+        x2 = self.__level1+(self.__nodes_in_line-1)*HORIZONTAL_DISTANCE
+        y2 = self.__level1+RADUIS
         self.__level2 = y2 + (x2-x1)*DRAWING_ANGLE_TAN - RADUIS # y1 = 60+x+RADUIS 
 
 
