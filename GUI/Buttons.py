@@ -125,12 +125,12 @@ class DrawingCanvasButtons(Frame):
     def disable(self):
         self.__save.config(state=DISABLED)
         self.__load.config(state=DISABLED)
-        self.__delete.config(state=DISABLED)
+        # self.__delete.config(state=DISABLED)
 
     def enable(self):
         self.__save.config(state=NORMAL)
         self.__load.config(state=NORMAL)
-        self.__delete.config(state=NORMAL)
+        # self.__delete.config(state=NORMAL)
     
 
 

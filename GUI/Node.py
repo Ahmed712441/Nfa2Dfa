@@ -388,7 +388,12 @@ class DFACurvedLine(Line):
         super().__init__(canvas, Node_out, Node_in, weight)
         self.__selected = False
 
-    def create_rounded(self,sign):
+    def create_rounded(self):
+        l = super().create_rounded()
+        self.bind_event(self.toggle)
+        return l
+    
+    def create_rounded_line(self,sign):
         Node_in_x , Node_in_y = self.Node_in.get_coor()
         Node_out_x , Node_out_y = self.Node_out.get_coor()
         dx = Node_out_x - Node_in_x
@@ -489,6 +494,19 @@ class DFANode(Node):
         canvas.lift(id)
         canvas.lift(label_id)
 
+    def connect_to_itself(self,weight):
+        
+        if self in self.adj :
+            raise DuplicateConnectionException()
+
+        l = DFACurvedLine(self.get_canvas(),self,self,weight)
+        l.create_rounded()
+        self.lines_out.append(l)
+        self.lines_in.append(l)
+        self.adj.append(self)
+        
+        return l
+
     def connect_node(self,node,weight=1):
         x1 , y1 = node.get_coor()
         x2 , y2 = self.get_coor()
@@ -504,7 +522,7 @@ class DFANode(Node):
         l =  None
         if y1 == y2:
             l = DFACurvedLine(self.get_canvas(),self,node,weight)
-            l.create_rounded(sign)
+            l.create_rounded_line(sign)
         else:
             l = DFACurvedLine(self.get_canvas(),self,node,weight)
             l.create()

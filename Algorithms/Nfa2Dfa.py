@@ -1,6 +1,7 @@
 from GUI.Node import *
 from GUI.settings import *
 import math
+from GUI.table import TransitionTableWindow
 
 def keyExists(dictt:dict,key:str):
     try:
@@ -106,8 +107,8 @@ class Drawer:
 
     def draw(self):
         
-        print(self.__graph)
-        print(self.__graph_map)
+        # print(self.__graph)
+        # print(self.__graph_map)
         # for node in self.__graph_map:
             
         nodes_labels = list(self.__graph_map.keys())
@@ -128,14 +129,22 @@ class Drawer:
                 # if out_node == in_node:
                 # else:
                 nodes[out_node].connect_node(nodes[in_node],label)
-                
+    
+
+    def get_graph(self):
+
+        return self.__graph
+
+    def get_alphabets(self):
+
+        return self.__alphabets                
                 
 class NFA2DFA:
 
     def __init__(self,initialNode,DrawingCanvas,on_finish_callback) -> None:
-        self.__initialNode = initialNode
+        # self.__initialNode = initialNode
         self.__DrawingCanvas = DrawingCanvas
-        self.__on_finish_callback = on_finish_callback
+        # self.__on_finish_callback = on_finish_callback
         self.__alphabets = set() # set of alphabets
         self.__fringe = [[initialNode.get_label(),[initialNode]]] # nodes that are not yet processed (new nodes)
         self.__visited = set() # nodes that are already propagated
@@ -175,8 +184,7 @@ class NFA2DFA:
         
         self.__graph[currNodeLabel] = self.propagate_lines(currLines)
         self.updateFringe(self.__graph[currNodeLabel])
-        # print(currLines,self.__graph[currNodeLabel] )
-        # self.updateFringe(self.__graph[currNodeLabel])
+        
         
         if len(self.__fringe) > 0 :
             self.propagate()
@@ -217,5 +225,16 @@ class NFA2DFA:
 
     def draw(self):
 
-        Drawer(self.__DrawingCanvas,self.__graph,self.__alphabets)
+        self.__drawer = Drawer(self.__DrawingCanvas,self.__graph,self.__alphabets)
 
+    def get_graph(self):
+
+        return self.__drawer.get_graph()
+
+    def get_alphabets(self):
+
+        return self.__alphabets
+
+    # def show_transition_table(self):
+
+    #     self.__drawer.show_transition_table()
