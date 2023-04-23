@@ -17,6 +17,12 @@ class Line(Element):
     def get_canvas(self):
         return self.__canvas
 
+    def get_line_id(self):
+        return self.__id 
+
+    def get_label_id(self):
+        return self.__label_id 
+
     def get_save_data(self):
 
         return  str(self.__weight) + '\t' + str(self.Node_out.get_id()) + '\t' + str(self.Node_in.get_id())  +  '\n'
@@ -39,7 +45,7 @@ class Line(Element):
             self.__has_epsilon = EPSILON in self.__weight
             print(self.__has_epsilon)
 
-    def __add_label(self):
+    def add_label(self):
 
         x1,y1,x2,y2 = self.__canvas.coords(self.__id)
         x = (x1 + x2)//2
@@ -67,10 +73,20 @@ class Line(Element):
         Node_in_x , Node_in_y = self.Node_in.get_coor()
         Node_out_x , Node_out_y = self.Node_out.get_coor()
 
-        dy = abs(Node_in_y - Node_out_y)
         dx = abs(Node_in_x - Node_out_x)
-        # print(dx,dy)
-        if(dx > dy):
+        dy =  None        
+
+        if dx != 0:
+            dy = abs(Node_in_y - Node_out_y)
+        else:
+            dy = Node_in_y - Node_out_y
+
+        if dx == 0 :
+            if(Node_in_y < Node_out_y):
+                self.__id = self.__canvas.create_line(Node_out_x+RADUIS,Node_out_y,Node_in_x+RADUIS,Node_in_y,arrow="last",fill=LINE_COLOR_NORMAL)
+            else:
+                self.__id = self.__canvas.create_line(Node_out_x-RADUIS,Node_out_y,Node_in_x-RADUIS,Node_in_y,arrow="last",fill=LINE_COLOR_NORMAL)
+        elif(dx > dy):
             if(Node_in_y < Node_out_y):
                 self.__id = self.__canvas.create_line(Node_out_x,Node_out_y+RADUIS,Node_in_x,Node_in_y+RADUIS,arrow="last",fill=LINE_COLOR_NORMAL)
             else:
@@ -81,7 +97,7 @@ class Line(Element):
             else:
                 self.__id = self.__canvas.create_line(Node_out_x-RADUIS,Node_out_y,Node_in_x-RADUIS,Node_in_y,arrow="last",fill=LINE_COLOR_NORMAL)
             
-        self.__add_label()
+        self.add_label()
         self.__canvas.lower(self.__id)
 
         return self
@@ -361,23 +377,100 @@ class Node(Element,InteractionInterface):
     
 class DFACurvedLine(Line):
 
-    def create(self):
+    def __init__(self, canvas, Node_out, Node_in, weight=1):
+        super().__init__(canvas, Node_out, Node_in, weight)
+        self.__selected = False
+
+    def create_rounded(self,sign):
         Node_in_x , Node_in_y = self.Node_in.get_coor()
         Node_out_x , Node_out_y = self.Node_out.get_coor()
-        dx = abs(Node_out_x - Node_in_x)
-        # sign = -1 if dx < 0 else 1 
-        # curv_coor = (Node_in_x+(dx/2),Node_in_y-RADUIS-ROUNDED_RADUIS)
-        curv_coor = (Node_out_x+ALPHA*dx, Node_out_y-ALPHA*abs(dx))
-        # print(Node_out_x,dx,Node_out_x-(dx/2))
-        # print(Node_in_x,Node_in_y-RADUIS,curv_coor[0],curv_coor[1],Node_out_x,Node_out_y-RADUIS)
-        self.__id = self.get_canvas().create_line(Node_in_x,Node_in_y-RADUIS,curv_coor[0],curv_coor[1],Node_out_x,Node_out_y-RADUIS,smooth=1,arrow="last",fill=LINE_COLOR_NORMAL)
-        # 180 270 180 200 180 270
-        # self.get_canvas().create_line(20,20 , 60, 10 , 120 , 20,smooth=1,fill=LINE_COLOR_NORMAL)
-        self.add_label_rounded(curv_coor[0]-10,curv_coor[1]+10)
+        dx = Node_out_x - Node_in_x
+        
+        curv_coor = (Node_out_x-ALPHA*dx, Node_out_y-sign*BETA*abs(dx))
+               
+        self.__line_id_ = self.get_canvas().create_line(Node_out_x,Node_out_y-sign*RADUIS,curv_coor[0],curv_coor[1],Node_in_x,Node_in_y-sign*RADUIS,smooth=1,arrow="last",fill=LINE_COLOR_NORMAL)
+        
+        self.add_label_rounded(curv_coor[0]-ALPHA_LABEL*dx,curv_coor[1]+sign*BETA_LABEL*abs(dx))
         
         return self
+    
+    def get_label_id(self):
+        try:
+            id = super().get_label_id()
+            if id:
+                return id 
+            else:
+                raise Exception("None value for id")
+        except:
+            return self.__label_id_
+        
+    
+    def get_line_id(self):
+        try:
+            id = super().get_line_id()
+            if id:
+                return id 
+            else:
+                raise Exception("None value for id")
+        except:
+            return self.__line_id_ 
+
+    def select(self):
+        self.__selected = True
+        label_id = self.get_label_id()
+        line_id = self.get_line_id()
+        canvas = self.get_canvas()
+
+        canvas.itemconfig(label_id, font=('Arial', 20),fill=LINE_COLOR_NORMAL)
+        canvas.itemconfig(line_id, width=5 , fill=LINE_COLOR_SELECTED)
+        
+
+    def deselect(self):
+        self.__selected = False
+        label_id = self.get_label_id()
+        line_id = self.get_line_id()
+        canvas = self.get_canvas()
+
+        canvas.itemconfig(label_id, font=('Arial', 10),fill=LINE_LABEL_COLOR)
+        canvas.itemconfig(line_id, width=1 , fill=LINE_COLOR_NORMAL)
+
+    def toggle(self):
+        if self.__selected:
+            self.deselect()
+        else:
+            self.select()
+
+    def bind_event(self, callback, binded_event='<Button-1>'):
+        canvas = self.get_canvas()
+        label_id = self.get_label_id()
+        line_id = self.get_line_id()
+        canvas.tag_bind(label_id,binded_event,lambda event, arg=line_id: callback())
+        canvas.tag_bind(line_id, binded_event, lambda event, arg=line_id: callback())
+        
+    def add_label(self):
+        
+        weight = self.get_weight()
+        line_id = self.get_line_id()
+        canvas = self.get_canvas()
+
+        x1,y1,x2,y2 = canvas.coords(line_id)
+        dy = y1-y2
+        dx = x1-x2
+        angle= math.atan2(dy,dx)
+        x = x1 - 55*math.cos(angle)
+        y = y1 - 55*math.sin(angle)
+        # print(x,y,x1,y1)
+        self.__label_id_ = canvas.create_text((x, y), text=weight)
+
+    
 
 class DFANode(Node):
+
+    def __init__(self, canvas, x, y, label, level, heurastic=0, goal=False, initial=False, expanded_level=1000000,):
+        super().__init__(canvas, x, y, label, heurastic, goal, initial, expanded_level)
+        self.__level = level 
+
+    
 
     def connect_node(self,node,weight=1):
         x1 , y1 = node.get_coor()
@@ -385,10 +478,16 @@ class DFANode(Node):
         
         if node in self.adj :
             raise DuplicateConnectionException()
+        
+        sign = 1 if self.__level == 1 else -1 # used for drawing downward or upward
 
+        l =  None
         if y1 == y2:
             l = DFACurvedLine(self.get_canvas(),self,node,weight)
-            l.create()
-            return l
+            l.create_rounded(sign)
         else:
-            return super(DFANode,self).connect_node(node,weight)
+            l = DFACurvedLine(self.get_canvas(),self,node,weight)
+            l.create()
+        l.bind_event(l.toggle)
+
+        return l

@@ -61,6 +61,7 @@ class Drawer:
                 if i == j:
                     continue
                 nodes[i].connect_node(nodes[j],'a')
+                
 class NFA2DFA:
 
     def __init__(self,initialNode,DrawingCanvas,on_finish_callback) -> None:
