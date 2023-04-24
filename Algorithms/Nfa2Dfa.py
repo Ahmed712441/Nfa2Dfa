@@ -26,7 +26,6 @@ class Drawer:
         self.__alphabets = alphabet
         self.__final_nodes = final_node
         self.check_error_state()
-        # self.get_final_nodes()
         self.reformat_transition_table()
         self.create_graph_table()
         self.__level1 =  self.calculate_level1_shift() # DRAWING_SHIFT

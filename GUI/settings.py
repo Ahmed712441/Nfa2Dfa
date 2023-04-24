@@ -1,5 +1,6 @@
 from pathlib import Path
 import math
+from tkinter.ttk import *
 
 BASE_DIR = Path(__file__).resolve().parent.parent.__str__()
 
@@ -24,6 +25,7 @@ GOAL_PATH_COLOR = 'purple'
 ACTIVE_LINE_COLOR = 'black'
 GOAL_PATH_LINE_COLOR = 'black'
 GOAL_PATH_LINE_LABEL_COLOR = 'white'
+LABEL_SELECTED_BG_COLOR = 'black'
 CROSS_DISTANCE = TREE_NODE_RADUIS* 0.7071 # cos,sin(45)
 VALUE_COLOR = 'red'
 SLEEP_AMOUNT = 1

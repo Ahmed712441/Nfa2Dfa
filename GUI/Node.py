@@ -435,10 +435,10 @@ class DFACurvedLine(Line):
         
         canvas.lift(line_id)
         canvas.lift(label_id)
-        # canvas.lift(self.Node_out.get_id())
         self.Node_out.lift()
-
-        canvas.itemconfig(label_id, font=('Arial', 20),fill=LINE_COLOR_NORMAL)
+        
+        
+        canvas.itemconfig(label_id,font=('Arial', 20),fill=LINE_COLOR_NORMAL)
         canvas.itemconfig(line_id, width=5 , fill=LINE_COLOR_SELECTED)
         
 
