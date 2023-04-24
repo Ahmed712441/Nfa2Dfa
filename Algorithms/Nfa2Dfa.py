@@ -10,14 +10,23 @@ def keyExists(dictt:dict,key:str):
     except:
         return False
 
+def hasGoalNode(nodes:list):
+
+    for node in nodes:
+        if node.is_goal():
+            return True
+    return False
+
 
 class Drawer:
 
-    def __init__(self,canvas,graph,alphabet) -> None:
+    def __init__(self,canvas,graph,alphabet,final_node) -> None:
         self.__canvas = canvas
         self.__graph = graph
         self.__alphabets = alphabet
+        self.__final_nodes = final_node
         self.check_error_state()
+        # self.get_final_nodes()
         self.reformat_transition_table()
         self.create_graph_table()
         self.__level1 =  self.calculate_level1_shift() # DRAWING_SHIFT
@@ -45,6 +54,9 @@ class Drawer:
             err_state[alphabet] = ['err_state']
         self.__graph['err_state'] = err_state
 
+    # def get_final_nodes():
+
+
     def reformat_transition_table(self):
 
         '''
@@ -55,11 +67,17 @@ class Drawer:
             for alphabet in adj.keys():
                 propagation_nodes = self.__graph[key][alphabet]
                 propagation_nodes.sort()
+                label = None
                 if len(propagation_nodes) == 1:
-                    self.__graph[key][alphabet] = ''.join(propagation_nodes[0].__str__()) 
+                    label = ''.join(propagation_nodes[0].__str__())
                 else:
-                    self.__graph[key][alphabet] = '{'+','.join([n.__str__() for n in propagation_nodes])+'}'
-    
+                    label = '{'+','.join([n.__str__() for n in propagation_nodes])+'}'
+                
+                self.__graph[key][alphabet] = label
+                
+                # if hasGoalNode(propagation_nodes):
+                #     self.__final_nodes.add(label)
+                
 
     def create_graph_table(self):
         '''
@@ -71,6 +89,7 @@ class Drawer:
         # intialize with empty list
         for n in nodes:
             self.__graph_map[n] = dict()
+            
             for recursive_node in nodes:
                 self.__graph_map[n][recursive_node] = []
 
@@ -107,6 +126,7 @@ class Drawer:
 
     def draw(self):
         
+        print(self.__final_nodes)
         # print(self.__graph)
         # print(self.__graph_map)
         # for node in self.__graph_map:
@@ -129,7 +149,11 @@ class Drawer:
                 # if out_node == in_node:
                 # else:
                 nodes[out_node].connect_node(nodes[in_node],label)
-    
+
+        for node in self.__final_nodes:
+            nodes[node].set_goal()
+        
+        nodes[nodes_labels[0]].set_initial()
 
     def get_graph(self):
 
@@ -142,13 +166,13 @@ class Drawer:
 class NFA2DFA:
 
     def __init__(self,initialNode,DrawingCanvas,on_finish_callback) -> None:
-        # self.__initialNode = initialNode
+
         self.__DrawingCanvas = DrawingCanvas
-        # self.__on_finish_callback = on_finish_callback
         self.__alphabets = set() # set of alphabets
         self.__fringe = [[initialNode.get_label(),[initialNode]]] # nodes that are not yet processed (new nodes)
         self.__visited = set() # nodes that are already propagated
         self.__graph = dict() # transition table
+        self.__final_nodes = set()
         self.propagate()
         self.draw()
         
@@ -173,7 +197,8 @@ class NFA2DFA:
         new_label = NFA2DFA.update_label(currNodeLabel,epsilon_nodes)
         currNodes += epsilon_nodes
         self.__fringe[0] = [new_label,currNodes]
-        
+        if hasGoalNode(currNodes):
+            self.__final_nodes.add(new_label)
 
     def propagate(self):
         
@@ -225,7 +250,7 @@ class NFA2DFA:
 
     def draw(self):
 
-        self.__drawer = Drawer(self.__DrawingCanvas,self.__graph,self.__alphabets)
+        self.__drawer = Drawer(self.__DrawingCanvas,self.__graph,self.__alphabets,self.__final_nodes)
 
     def get_graph(self):
 
@@ -234,7 +259,3 @@ class NFA2DFA:
     def get_alphabets(self):
 
         return self.__alphabets
-
-    # def show_transition_table(self):
-
-    #     self.__drawer.show_transition_table()
