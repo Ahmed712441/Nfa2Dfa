@@ -121,8 +121,8 @@ class MainCanvas(Frame):
             
             self.__drawer = NFA2DFA(self.__drawing_canvas.initial_node,self.__tree_canvas.canvas,None)
             self.__control_bar.disable()
-            # self.__drawing_canvas_buttons.disable()
             self.__show_transition_table_b.config(state=NORMAL)
+            self.__drawing_canvas_buttons.disable()
         else:
             message = ''
             if not self.__drawing_canvas.initial_node:
@@ -189,7 +189,7 @@ if __name__ == "__main__":
     h = 720 if h > 720 else h
     root.geometry("%dx%d+0+0" % (w, h))
     
-    root.title('AI Graph Search')
+    root.title('NFA to DFA')
     root.iconbitmap(os.path.join(BASE_DIR,'GUI','images','logo.ico'))
     can = MainCanvas(root,920,720)
     
@@ -199,6 +199,6 @@ if __name__ == "__main__":
     root.rowconfigure(0,weight=1)
     for arg in sys.argv:
         if arg[-5:] == '.gtxt':
-          can.get_drawing_canvas().load(arg)  
+          can.get_drawing_canvas().load(arg)
 
     root.mainloop()
