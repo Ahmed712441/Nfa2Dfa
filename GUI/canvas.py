@@ -47,7 +47,7 @@ class DrawingCanvas(Frame):
         
         focused = self.root.focus_get().__str__()
         # print(focused)
-        if (event.keycode == 46 or event.keycode == 8) and self.selected and not (focused == ".!maincanvas.!entry"): # keycode == 46 (<Delete key>) keycode == 8 (<Backspace key>) checks for delete press and node selection at the same moment
+        if (event.keycode == 46 or event.keycode == 8) and self.selected and not (focused == ".!maincanvas.!entry" or focused == ".!maincanvas.!entry2"): # keycode == 46 (<Delete key>) keycode == 8 (<Backspace key>) checks for delete press and node selection at the same moment
             
             if  isinstance(self.selected,Node):
                 for line in self.selected.lines_in + self.selected.lines_out:
@@ -276,6 +276,7 @@ class DrawingCanvas(Frame):
             node = Node(self.canvas,None,None,None)
             node.load(lines[i])
             node.bind_event(self.node_clicked)
+            node.bind_event(self.node_right_clicked,"<Button-3>")
             self.objects[str(node.get_id())] = node
             old_id = lines[i].split('\t')[0]
             old_to_new_id_maping[old_id] = node
@@ -319,7 +320,8 @@ class DrawingCanvas(Frame):
 
         keys = self.objects.keys()
         for key in keys:
-            if new_label == self.objects[key].get_label():
+            obj = self.objects[key]
+            if isinstance(obj,Node) and new_label == self.objects[key].get_label():
                 raise Exception("label already exists")
 
         self.selected.set_label(new_label)
