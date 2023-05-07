@@ -123,6 +123,7 @@ class MainCanvas(Frame):
             self.__control_bar.disable()
             self.__show_transition_table_b.config(state=NORMAL)
             self.__drawing_canvas_buttons.disable()
+            self.__convert_button.config(state=DISABLED)
         else:
             message = ''
             if not self.__drawing_canvas.initial_node:
@@ -174,6 +175,7 @@ class MainCanvas(Frame):
             self.__control_bar.enable()
             self.__drawing_canvas_buttons.enable()
             self.__show_transition_table_b.config(state=DISABLED)
+            self.__convert_button.config(state=NORMAL)
         else:
             self.__drawing_canvas.delete_all()
 
