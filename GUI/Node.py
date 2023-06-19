@@ -207,12 +207,9 @@ class Node(Element,InteractionInterface):
         return epsilon_nodes
     
     def get_label(self):
-        print('called')
         nodes = self.get_epsilon_nodes([self])
-        print('returned')
         nodes.append(self)
         nodes.sort()
-        # print(nodes)
         return create_label(nodes)
 
     def set_label(self,new_label):
