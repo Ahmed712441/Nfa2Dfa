@@ -67,4 +67,10 @@ class Mouse_state:
         
         return self.__state
 
+def create_label(nodes):
+    if len(nodes) > 1:
+        return ','.join([node.label() for node in nodes])
+    else:
+        return nodes[0].label()
+
 mouse = Mouse_state()

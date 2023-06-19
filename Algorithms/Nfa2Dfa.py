@@ -3,6 +3,17 @@ from GUI.settings import *
 import math
 from GUI.table import TransitionTableWindow
 
+def create_label(nodes):
+    if len(nodes) > 1:
+        labels = [node.get_label() for node in nodes]
+        labels = set([lab for label in labels for lab in label.split(',')])
+        labels = list(labels)
+        labels.sort()
+        return '{'+ ','.join(labels) +'}'
+    else:
+        return '{'+nodes[0].get_label()+'}'
+
+
 def keyExists(dictt:dict,key:str):
     try:
         dictt[key]
@@ -41,7 +52,7 @@ class Drawer:
             for alphabet in self.__alphabets:
                 if not keyExists(adj,alphabet):
                     has_error_state = True
-                    self.__graph[key][alphabet] = ['err_state']
+                    self.__graph[key][alphabet] = ["{err_state}"]
 
         if has_error_state:
             self.create_error_state()
@@ -50,8 +61,8 @@ class Drawer:
         
         err_state = dict()
         for alphabet in self.__alphabets:
-            err_state[alphabet] = ['err_state']
-        self.__graph['err_state'] = err_state
+            err_state[alphabet] = ["{err_state}"]
+        self.__graph["{err_state}"] = err_state
 
     # def get_final_nodes():
 
@@ -68,14 +79,17 @@ class Drawer:
                 propagation_nodes.sort()
                 label = None
                 if len(propagation_nodes) == 1:
-                    label = ''.join(propagation_nodes[0].__str__())
+                    if propagation_nodes[0].__str__() == "{err_state}":
+                        label = propagation_nodes[0].__str__()
+                    else:
+                        label = create_label(propagation_nodes)
+                        # label = '{'+ ''.join(propagation_nodes[0].__str__()) +'}'
                 else:
-                    label = '{'+','.join([n.__str__() for n in propagation_nodes])+'}'
-                
+                    # label = '{'+','.join([n.__str__() for n in propagation_nodes])+'}'
+                    label = create_label(propagation_nodes)
+
                 self.__graph[key][alphabet] = label
                 
-                # if hasGoalNode(propagation_nodes):
-                #     self.__final_nodes.add(label)
                 
 
     def create_graph_table(self):
@@ -92,10 +106,14 @@ class Drawer:
             for recursive_node in nodes:
                 self.__graph_map[n][recursive_node] = []
 
-        # reformat        
+        # reformat     
+        # print(nodes)
+           
         for n in nodes:
             adj = self.__graph[n]
+            # print(adj)
             for alphabet in adj.keys():
+                # print(adj[alphabet])
                 self.__graph_map[n][adj[alphabet]].append(alphabet)
 
         #clean non reachable nodes
@@ -125,7 +143,7 @@ class Drawer:
 
     def draw(self):
         
-        print(self.__final_nodes)
+        # print(self.__final_nodes)
         # print(self.__graph)
         # print(self.__graph_map)
         # for node in self.__graph_map:
@@ -172,6 +190,7 @@ class NFA2DFA:
         self.__visited = set() # nodes that are already propagated
         self.__graph = dict() # transition table
         self.__final_nodes = set()
+        # self.__never_alone = set() # all nodes with epsilon transition will never appear alone
         self.propagate()
         self.draw()
         
@@ -184,25 +203,41 @@ class NFA2DFA:
             return '{'+ label + ',' + new_nodes+'}'
         else:
             return label
-
+        
+    @staticmethod
+    def create_label(nodes):
+        if len(nodes) > 1:
+            labels = [node.get_label() for node in nodes]
+            labels = set([lab for label in labels for lab in label.split(',')])
+            labels = list(labels)
+            labels.sort()
+            return '{'+ ','.join(labels) +'}'
+        else:
+            return '{'+nodes[0].get_label()+'}'
+        
     def setup_node(self):
         '''
         setup node for epsilon connected node before propagating
         '''
         currNodeLabel , currNodes = self.__fringe[0]
         currLines = [line for node in currNodes for line in node.lines_out ]
-        epsilon_nodes = [line.Node_in for line in currLines if line.has_epsilon()]
-        epsilon_nodes.sort()
-        new_label = NFA2DFA.update_label(currNodeLabel,epsilon_nodes)
+        # epsilon_nodes = [line.Node_in for line in currLines if line.has_epsilon()]
+        epsilon_nodes = [eps for node in currNodes for eps in node.get_epsilon_nodes([node])]
+        # epsilon_nodes.sort()
+        # new_label = NFA2DFA.update_label(currNodeLabel,epsilon_nodes)
         currNodes += epsilon_nodes
+        currNodes.sort()
+        new_label = NFA2DFA.create_label(currNodes)
         self.__fringe[0] = [new_label,currNodes]
         if hasGoalNode(currNodes):
             self.__final_nodes.add(new_label)
 
     def propagate(self):
-        
+
+        self.__visited.add(self.__fringe[0][0])
         self.setup_node()
         currNodeLabel , currNodes = self.__fringe.pop(0)
+        # print(currNodeLabel)
         self.__visited.add(currNodeLabel)
         currLines = [line for node in currNodes for line in node.lines_out ]
         
@@ -211,6 +246,8 @@ class NFA2DFA:
         
         
         if len(self.__fringe) > 0 :
+            # print(self.__fringe)
+            # print("visited",self.__visited)
             self.propagate()
         else:    
             print("graph : ",self.__graph)

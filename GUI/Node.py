@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from .settings import *
 from .Interfaces import Element,InteractionInterface
-from .utils import OverlapException,DuplicateConnectionException
+from .utils import OverlapException,DuplicateConnectionException,create_label
 
 class Line(Element):
 
@@ -192,9 +192,28 @@ class Node(Element,InteractionInterface):
 
     def get_label_id(self):
         return self.__label_id
-
-    def get_label(self):
+    
+    def label(self):
         return self.__label
+
+    def get_epsilon_nodes(self,avoid):
+        epsilon_nodes = [line.Node_in for line in self.lines_out if line.has_epsilon()]
+        newavoid = avoid + epsilon_nodes
+        for node in epsilon_nodes:
+            if node not in avoid:
+                epsilons = node.get_epsilon_nodes(newavoid)
+                for epsilon in epsilons:
+                    epsilon_nodes.append(epsilon)
+        return epsilon_nodes
+    
+    def get_label(self):
+        print('called')
+        nodes = self.get_epsilon_nodes([self])
+        print('returned')
+        nodes.append(self)
+        nodes.sort()
+        # print(nodes)
+        return create_label(nodes)
 
     def set_label(self,new_label):
         if new_label != self.__label:
@@ -292,7 +311,7 @@ class Node(Element,InteractionInterface):
         del self
 
     def __lt__(self,other):
-        return self.get_label() < other.get_label() 
+        return self.label() < other.label() 
 
     def select(self):
 
